@@ -4,6 +4,8 @@ CXXFLAGS=-std=c++11 -g -O0 -ldl -Wall -Wextra -Wpedantic -Werror -Wno-unused-var
 SRC=
 HDR=Deque.hpp
 
+all: tests
+
 my_tests: my_tests.cpp $(SRC) $(HDR)
 	$(CXX) $(CXXFLAGS) $(SRC) my_tests.cpp -o $@
 
