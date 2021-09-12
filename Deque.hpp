@@ -6,6 +6,14 @@
 #define Deque_DEFINE(T) \
     struct Deque_##T; \
     typedef bool (* T##_compare)(const T&, const T&); \
+    struct Deque_##T; \
+    struct Deque_##T##_Iterator { \
+        Deque_##T* _deque; \
+        uint32_t _cursor; \
+        T&(*deref)(Deque_##T##_Iterator*); \
+        void(*inc)(Deque_##T##_Iterator*); \
+        void(*dec)(Deque_##T##_Iterator*); \
+    }; \
     struct Deque_##T { \
         T* _arr; \
         uint32_t _capacity; \
@@ -22,7 +30,43 @@
         T&(*back)(Deque_##T*); \
         void(*pop_back)(Deque_##T*); \
         void(*pop_front)(Deque_##T*); \
+        Deque_##T##_Iterator(*begin)(Deque_##T*); \
+        Deque_##T##_Iterator(*end)(Deque_##T*); \
+        T&(*at)(Deque_##T*, size_t cursor); \
+        void(*clear)(Deque_##T*); \
     }; \
+    bool Deque_##T##_Iterator_equal( \
+        Deque_##T##_Iterator a, \
+        Deque_##T##_Iterator b \
+    ) { \
+        return a._cursor == b._cursor; \
+    } \
+    T& Deque_##T##_Iterator_deref( \
+        Deque_##T##_Iterator* it \
+    ) { \
+        return it->_deque->at(it->_deque, it->_cursor); \
+    } \
+    void Deque_##T##_Iterator_inc( \
+        Deque_##T##_Iterator* it \
+    ) { \
+        it->_cursor += 1; \
+    } \
+    void Deque_##T##_Iterator_dec( \
+        Deque_##T##_Iterator* it \
+    ) { \
+        it->_cursor -= 1; \
+    } \
+    void Deque_##T##_Iterator_ctor( \
+        Deque_##T##_Iterator* it, \
+        Deque_##T* deque, \
+        uint32_t cursor \
+    ) { \
+        it->_deque = deque; \
+        it->_cursor = cursor; \
+        it->deref = Deque_##T##_Iterator_deref; \
+        it->inc = Deque_##T##_Iterator_inc; \
+        it->dec = Deque_##T##_Iterator_dec; \
+    } \
     size_t Deque_##T##_size(Deque_##T* self) { \
         if (self->_back >= self->_front) { \
             /* If queue is nicely ordered */ \
@@ -89,6 +133,31 @@
         /* Assumes queue is not empty */ \
         self->_front += 1; \
     } \
+    Deque_##T##_Iterator Deque_##T##_begin( \
+        Deque_##T* self \
+    ) { \
+        Deque_##T##_Iterator it; \
+        Deque_##T##_Iterator_ctor(&it, self, 0); \
+        return it; \
+    } \
+    Deque_##T##_Iterator Deque_##T##_end( \
+        Deque_##T* self \
+    ) { \
+        Deque_##T##_Iterator it; \
+        Deque_##T##_Iterator_ctor(&it, self, self->size(self)); \
+        return it; \
+    } \
+    T& Deque_##T##_at(Deque_##T* self, size_t cursor) { \
+        /* Performs no bounds checking */ \
+        return self->_arr[self->_front + cursor]; \
+    } \
+    void Deque_##T##_clear(Deque_##T* self) { \
+        free(self->_arr); \
+        self->_arr = 0; \
+        self->_capacity = 0; \
+        self->_front = 0; \
+        self->_back = 0; \
+    } \
     void Deque_##T##_ctor( \
         Deque_##T* deque, \
         T##_compare comparator \
@@ -108,6 +177,10 @@
         deque->back = Deque_##T##_back; \
         deque->pop_back = Deque_##T##_pop_back; \
         deque->pop_front = Deque_##T##_pop_front; \
+        deque->begin = Deque_##T##_begin; \
+        deque->end = Deque_##T##_end; \
+        deque->at = Deque_##T##_at; \
+        deque->clear = Deque_##T##_clear; \
     }
 
 #endif
