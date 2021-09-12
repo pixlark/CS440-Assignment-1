@@ -1,5 +1,5 @@
 CXX=clang++
-CXXFLAGS=-g -O0 -ldl -Wall -Wextra -Wpedantic -Werror -Wno-unused-variable
+CXXFLAGS=-std=c++11 -g -O0 -ldl -Wall -Wextra -Wpedantic -Werror -Wno-unused-variable
 
 SRC=
 HDR=Deque.hpp
