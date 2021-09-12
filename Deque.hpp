@@ -20,7 +20,7 @@
         uint32_t _front; \
         uint32_t _back; \
         const char* type_name; \
-        T##_compare comparator; \
+        T##_compare less_than; \
         size_t(*size)(Deque_##T*); \
         bool(*empty)(Deque_##T*); \
         void(*grow)(Deque_##T*); \
@@ -34,12 +34,30 @@
         Deque_##T##_Iterator(*end)(Deque_##T*); \
         T&(*at)(Deque_##T*, size_t cursor); \
         void(*clear)(Deque_##T*); \
+        void(*dtor)(Deque_##T*); \
     }; \
     bool Deque_##T##_Iterator_equal( \
         Deque_##T##_Iterator a, \
         Deque_##T##_Iterator b \
     ) { \
         return a._cursor == b._cursor; \
+    } \
+    bool Deque_##T##_equal( \
+        Deque_##T& a, \
+        Deque_##T& b \
+    ) { \
+        if (a.size(&a) != b.size(&b)) { \
+            return false; \
+        } \
+        size_t size = a.size(&a); \
+        for (size_t i = 0; i < size; i++) { \
+            T x = a.at(&a, i), y = b.at(&b, i); \
+            if (a.less_than(x, y) || a.less_than(y, x)) { \
+                return false; \
+            } \
+        } \
+        /* All elements compared equal */ \
+        return true; \
     } \
     T& Deque_##T##_Iterator_deref( \
         Deque_##T##_Iterator* it \
@@ -158,16 +176,19 @@
         self->_front = 0; \
         self->_back = 0; \
     } \
+    void Deque_##T##_dtor(Deque_##T* self) { \
+        self->clear(self); \
+    } \
     void Deque_##T##_ctor( \
         Deque_##T* deque, \
-        T##_compare comparator \
+        T##_compare less_than \
     ) { \
         deque->_arr = 0; \
         deque->_capacity = 0; \
         deque->_front = 0; \
         deque->_back = 0; \
         deque->type_name = #T; \
-        deque->comparator = comparator; \
+        deque->less_than = less_than; \
         deque->size = Deque_##T##_size; \
         deque->empty = Deque_##T##_empty; \
         deque->grow = Deque_##T##_grow; \
@@ -181,6 +202,7 @@
         deque->end = Deque_##T##_end; \
         deque->at = Deque_##T##_at; \
         deque->clear = Deque_##T##_clear; \
+        deque->dtor = Deque_##T##_dtor; \
     }
 
 #endif
