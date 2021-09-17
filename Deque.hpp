@@ -14,12 +14,14 @@
         void(*inc)(Deque_##T##_Iterator*); \
         void(*dec)(Deque_##T##_Iterator*); \
     }; \
+    static const char Deque_##T##_type_name[] = "Deque_" #T; \
+    static const size_t Deque_##T##_type_name_size = sizeof(Deque_##T##_type_name); \
     struct Deque_##T { \
         T* _arr; \
         uint32_t _capacity; \
         uint32_t _front; \
         uint32_t _back; \
-        const char* type_name; \
+        char type_name[Deque_##T##_type_name_size]; \
         T##_compare less_than; \
         size_t(*size)(Deque_##T*); \
         bool(*empty)(Deque_##T*); \
@@ -142,7 +144,7 @@
     } \
     T& Deque_##T##_back(Deque_##T* self) { \
         /* Assumes queue is not empty */ \
-        return self->_arr[self->_back % self->_capacity]; \
+        return self->_arr[(self->_back - 1) % self->_capacity]; \
     } \
     void Deque_##T##_pop_back(Deque_##T* self) { \
         /* Assumes queue is not empty */ \
@@ -235,7 +237,7 @@
         deque->_capacity = 0; \
         deque->_front = 0; \
         deque->_back = 0; \
-        deque->type_name = #T; \
+        strcpy(deque->type_name, Deque_##T##_type_name); \
         deque->less_than = less_than; \
         deque->size = Deque_##T##_size; \
         deque->empty = Deque_##T##_empty; \
