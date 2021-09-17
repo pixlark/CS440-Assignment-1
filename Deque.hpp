@@ -94,9 +94,7 @@
             return self->_back - self->_front; \
         } \
         /* Otherwise, our queue crosses the boundary */ \
-        /* and we have to perform a bit of magic */ \
-        /* TODO(Brooke): This is ugly, do better. */ \
-        uint32_t end_size = (uint32_t) ((2UL << 32UL) - ((uint64_t) self->_front)); \
+        size_t end_size = self->_capacity - (self->_front % self->_capacity); \
         return self->_back + end_size; \
     } \
     bool Deque_##T##_empty(Deque_##T* self) { \
