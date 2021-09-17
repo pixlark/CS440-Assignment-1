@@ -204,9 +204,9 @@
         } \
     } \
     void Deque_##T##_sort(Deque_##T* self, Deque_##T##_Iterator low, Deque_##T##_Iterator high) { \
-        /*Deque_##T##_quicksort_helper(self, low._cursor, high._cursor);*/ \
-        /* Copy the deque elements out a buffer */ \
-        T* buffer = (T*) malloc(self->size(self) * sizeof(T)); \
+        /* Copy the deque elements into a buffer */ \
+        size_t buffer_size = high._cursor - low._cursor; \
+        T* buffer = (T*) malloc(buffer_size * sizeof(T)); \
         size_t i = 0; \
         for (Deque_##T##_Iterator iter = low; \
              !Deque_##T##_Iterator_equal(iter, high); \
@@ -215,7 +215,7 @@
             i += 1; \
         } \
         /* Sort this buffer */ \
-        qsort_r((void*) buffer, self->size(self), sizeof(T), Deque_##T##_qsort_r_compare, (void*) self); \
+        qsort_r((void*) buffer, buffer_size, sizeof(T), Deque_##T##_qsort_r_compare, (void*) self); \
         /* Copy the buffer back into the deque */ \
         i = 0; \
         for (Deque_##T##_Iterator iter = low; \
