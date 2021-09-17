@@ -187,47 +187,43 @@
     void Deque_##T##_dtor(Deque_##T* self) { \
         self->clear(self); \
     } \
-    void Deque_##T##_quicksort_helper(Deque_##T* self, size_t low, size_t high) { \
-        /* Basic n*log(n) in-place quick sort */ \
-        /* `low`  is inclusive */ \
-        /* `high` is exclusive */ \
-        size_t range = high - low; \
-        if (range < 2) { \
-            return; \
+    int Deque_##T##_qsort_r_compare(const void* a, const void* b, void* context) { \
+        Deque_##T* self = (Deque_##T*) context; \
+        const T* left = (T*) a; \
+        const T* right = (T*) b; \
+        bool left_less_than_right = self->less_than(*left, *right); \
+        bool right_less_than_left = self->less_than(*right, *left); \
+        if (!left_less_than_right && !right_less_than_left) { \
+            /* left = right */ \
+            return 0; \
+        } else if (left_less_than_right) { \
+            /* left < right */ \
+            return -1; \
+        } else { \
+            return 1; \
         } \
-        size_t pivot_index = low + (range / 2); \
-        T pivot = self->at(self, pivot_index); \
-        /* Quicksort: Hoare partition scheme */ \
-        size_t left = low - 1, right = high + 1; \
-        size_t new_pivot_index; \
-        while (true) { \
-            /* Increment left at least once, and then */ \
-            /* continue so long as it's less than the pivot */ \
-            left += 1; \
-            while (left < high && self->less_than(self->at(self, left), pivot)) { \
-                left += 1; \
-            } \
-            /* Do the same for the right */ \
-            right -= 1; \
-            while (right > 0 && self->less_than(pivot, self->at(self, right))) { \
-                right -= 1; \
-            } \
-            /* If left and right crossed, we've partitioned */ \
-            if (left >= right) { \
-                new_pivot_index = right; \
-                break; \
-            } \
-            /* Otherwise, swap and repeat */ \
-            T temp = self->at(self, left); \
-            self->at(self, left) = self->at(self, right); \
-            self->at(self, right) = temp; \
-        } \
-        /* Recurse */ \
-        Deque_##T##_quicksort_helper(self, low, new_pivot_index); \
-        Deque_##T##_quicksort_helper(self, new_pivot_index + 1, high); \
     } \
     void Deque_##T##_sort(Deque_##T* self, Deque_##T##_Iterator low, Deque_##T##_Iterator high) { \
-        Deque_##T##_quicksort_helper(self, low._cursor, high._cursor); \
+        /*Deque_##T##_quicksort_helper(self, low._cursor, high._cursor);*/ \
+        /* Copy the deque elements out a buffer */ \
+        T* buffer = (T*) malloc(self->size(self) * sizeof(T)); \
+        size_t i = 0; \
+        for (Deque_##T##_Iterator iter = low; \
+             !Deque_##T##_Iterator_equal(iter, high); \
+             iter.inc(&iter)) { \
+            buffer[i] = iter.deref(&iter); \
+            i += 1; \
+        } \
+        /* Sort this buffer */ \
+        qsort_r((void*) buffer, self->size(self), sizeof(T), Deque_##T##_qsort_r_compare, (void*) self); \
+        /* Copy the buffer back into the deque */ \
+        i = 0; \
+        for (Deque_##T##_Iterator iter = low; \
+             !Deque_##T##_Iterator_equal(iter, high); \
+             iter.inc(&iter)) { \
+            iter.deref(&iter) = buffer[i]; \
+            i += 1; \
+        } \
     } \
     void Deque_##T##_ctor( \
         Deque_##T* deque, \
