@@ -35,6 +35,7 @@
         T&(*at)(Deque_##T*, size_t cursor); \
         void(*clear)(Deque_##T*); \
         void(*dtor)(Deque_##T*); \
+        void(*sort)(Deque_##T*, Deque_##T##_Iterator, Deque_##T##_Iterator); \
     }; \
     bool Deque_##T##_Iterator_equal( \
         Deque_##T##_Iterator a, \
@@ -167,7 +168,12 @@
     } \
     T& Deque_##T##_at(Deque_##T* self, size_t cursor) { \
         /* Performs no bounds checking */ \
-        return self->_arr[self->_front + cursor]; \
+        size_t effective_front = self->_front % self->_capacity; \
+        if (effective_front + cursor >= self->_capacity) { \
+            return self->_arr[effective_front + cursor - self->_capacity]; \
+        } else { \
+            return self->_arr[effective_front + cursor]; \
+        } \
     } \
     void Deque_##T##_clear(Deque_##T* self) { \
         free(self->_arr); \
@@ -178,6 +184,48 @@
     } \
     void Deque_##T##_dtor(Deque_##T* self) { \
         self->clear(self); \
+    } \
+    void Deque_##T##_quicksort_helper(Deque_##T* self, size_t low, size_t high) { \
+        /* Basic n*log(n) in-place quick sort */ \
+        /* `low`  is inclusive */ \
+        /* `high` is exclusive */ \
+        size_t range = high - low; \
+        if (range < 2) { \
+            return; \
+        } \
+        size_t pivot_index = low + (range / 2); \
+        T pivot = self->at(self, pivot_index); \
+        /* Quicksort: Hoare partition scheme */ \
+        size_t left = low - 1, right = high + 1; \
+        size_t new_pivot_index; \
+        while (true) { \
+            /* Increment left at least once, and then */ \
+            /* continue so long as it's less than the pivot */ \
+            left += 1; \
+            while (left < high && self->less_than(self->at(self, left), pivot)) { \
+                left += 1; \
+            } \
+            /* Do the same for the right */ \
+            right -= 1; \
+            while (right > 0 && self->less_than(pivot, self->at(self, right))) { \
+                right -= 1; \
+            } \
+            /* If left and right crossed, we've partitioned */ \
+            if (left >= right) { \
+                new_pivot_index = right; \
+                break; \
+            } \
+            /* Otherwise, swap and repeat */ \
+            T temp = self->at(self, left); \
+            self->at(self, left) = self->at(self, right); \
+            self->at(self, right) = temp; \
+        } \
+        /* Recurse */ \
+        Deque_##T##_quicksort_helper(self, low, new_pivot_index); \
+        Deque_##T##_quicksort_helper(self, new_pivot_index + 1, high); \
+    } \
+    void Deque_##T##_sort(Deque_##T* self, Deque_##T##_Iterator low, Deque_##T##_Iterator high) { \
+        Deque_##T##_quicksort_helper(self, low._cursor, high._cursor); \
     } \
     void Deque_##T##_ctor( \
         Deque_##T* deque, \
@@ -203,6 +251,7 @@
         deque->at = Deque_##T##_at; \
         deque->clear = Deque_##T##_clear; \
         deque->dtor = Deque_##T##_dtor; \
+        deque->sort = Deque_##T##_sort; \
     }
 
 #endif

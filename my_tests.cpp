@@ -14,20 +14,24 @@ void debug_dump(Deque_int* deque) {
     printf("]\n");
 }
 
+bool less_than(const int& a, const int& b) {
+    return a < b;
+}
+
 int main() {
     Deque_int deque;
-    Deque_int_ctor(&deque, 0);
+    Deque_int_ctor(&deque, less_than);
+
+    deque.push_back(&deque, 5);
+    deque.push_back(&deque, 3);
+    deque.push_back(&deque, 8);
+    deque.push_front(&deque, -2);
+    deque.push_front(&deque, 10);
 
     debug_dump(&deque);
-    deque.push_back(&deque, 1);
-    debug_dump(&deque);
-    deque.push_back(&deque, 2);
-    debug_dump(&deque);
-    deque.push_back(&deque, 3);
-    debug_dump(&deque);
-    deque.push_front(&deque, -1);
-    debug_dump(&deque);
-    deque.push_front(&deque, -2);
+
+    deque.sort(&deque, deque.begin(&deque), deque.end(&deque));
+
     debug_dump(&deque);
     
     return 0;
